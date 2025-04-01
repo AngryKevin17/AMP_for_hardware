@@ -690,11 +690,8 @@ class LeggedRobot(BaseTask):
         return torch.stack([off_x, off_y, off_z], dim=-1)
 
     def foot_positions_in_base_frame(self, foot_angles):
-        foot_positions = torch.zeros_like(foot_angles)
-        for i in range(4):
-            foot_positions[:, i * 3:i * 3 + 3].copy_(
-                self.foot_position_in_hip_frame(foot_angles[:, i * 3: i * 3 + 3], l_hip_sign=(-1)**(i)))
-        foot_positions = foot_positions + HIP_OFFSETS.reshape(12,).to(self.device)
+        # TODO
+        foot_positions = torch.zeros(self.num_envs, 12, dtype=torch.float, device=self.device, requires_grad=False)
         return foot_positions
 
     def _prepare_reward_function(self):
@@ -969,6 +966,10 @@ class LeggedRobot(BaseTask):
         return heights.view(self.num_envs, -1) * self.terrain.cfg.vertical_scale
 
     #------------ reward functions----------------
+    def _reward_survival(self):
+        # Reward survival
+        return torch.ones(self.num_envs, dtype=torch.float, device=self.device)
+    
     def _reward_lin_vel_z(self):
         # Penalize z axis base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
