@@ -92,6 +92,7 @@ class T1RoughCfg( LeggedRobotCfg ):
         base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
             survival = 10.0
+            dof_ref = -0.01
             torques = -0.0002
             dof_pos_limits = -10.0
 
