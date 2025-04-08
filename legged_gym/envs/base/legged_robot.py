@@ -50,12 +50,6 @@ from .legged_robot_config import LeggedRobotCfg
 from rsl_rl.datasets.motion_loader import AMPLoader
 
 
-COM_OFFSET = torch.tensor([0.012731, 0.002186, 0.000515])
-HIP_OFFSETS = torch.tensor([
-    [0.183, 0.047, 0.],
-    [0.183, -0.047, 0.],
-    [-0.183, 0.047, 0.],
-    [-0.183, -0.047, 0.]]) + COM_OFFSET
 
 
 class LeggedRobot(BaseTask):
@@ -259,17 +253,17 @@ class LeggedRobot(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
-        self.privileged_obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel,
-                                    self.base_ang_vel  * self.obs_scales.ang_vel,
-                                    self.projected_gravity,
-                                    self.commands[:, :3] * self.commands_scale,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                    self.dof_vel * self.obs_scales.dof_vel,
-                                    self.actions
+        self.privileged_obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel, #3
+                                    self.base_ang_vel  * self.obs_scales.ang_vel, #3
+                                    self.projected_gravity, #3
+                                    self.commands[:, :3] * self.commands_scale, #3
+                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos, #13
+                                    self.dof_vel * self.obs_scales.dof_vel, #13
+                                    self.actions #13
                                     ),dim=-1)
         # add perceptive inputs if not blind
         if self.cfg.terrain.measure_heights:
-            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements
+            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements #187
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf, heights), dim=-1)
 
         # add noise if needed
@@ -284,7 +278,7 @@ class LeggedRobot(BaseTask):
 
     def get_amp_observations(self):
         joint_pos = self.dof_pos
-        foot_pos = self.foot_positions_in_base_frame(self.dof_pos).to(self.device)
+        foot_pos = self.feet_pos.view(self.num_envs, -1)
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel
@@ -399,6 +393,8 @@ class LeggedRobot(BaseTask):
             self.measured_heights = self._get_heights()
         if self.cfg.domain_rand.push_robots and  (self.common_step_counter % self.cfg.domain_rand.push_interval == 0):
             self._push_robots()
+        
+        self._refresh_feet_state()
 
     def _resample_commands(self, env_ids):
         """ Randommly select commands of some environments
@@ -479,6 +475,10 @@ class LeggedRobot(BaseTask):
         self.gym.set_dof_state_tensor_indexed(self.sim,
                                               gymtorch.unwrap_tensor(self.dof_state),
                                               gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+        
+    def _refresh_feet_state(self):
+        self.feet_pos[:] = self.body_states[:, self.feet_indices, 0:3]
+        self.feet_quat[:] = self.body_states[:, self.feet_indices, 3:7]
 
     def _reset_root_states(self, env_ids):
         """ Resets ROOT states position and velocities of selected environmments
@@ -597,9 +597,11 @@ class LeggedRobot(BaseTask):
         actor_root_state = self.gym.acquire_actor_root_state_tensor(self.sim)
         dof_state_tensor = self.gym.acquire_dof_state_tensor(self.sim)
         net_contact_forces = self.gym.acquire_net_contact_force_tensor(self.sim)
+        body_state = self.gym.acquire_rigid_body_state_tensor(self.sim)
         self.gym.refresh_dof_state_tensor(self.sim)
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.gym.refresh_net_contact_force_tensor(self.sim)
+        self.gym.refresh_rigid_body_state_tensor(self.sim)
 
         # create some wrapper tensors for different slices
         self.root_states = gymtorch.wrap_tensor(actor_root_state)
@@ -607,6 +609,9 @@ class LeggedRobot(BaseTask):
         self.dof_pos = self.dof_state.view(self.num_envs, self.num_dof, 2)[..., 0]
         self.dof_vel = self.dof_state.view(self.num_envs, self.num_dof, 2)[..., 1]
         self.base_quat = self.root_states[:, 3:7]
+        self.body_states = gymtorch.wrap_tensor(body_state).view(self.num_envs, self.num_bodies, 13)
+        self.feet_pos = self.body_states[:, self.feet_indices, 0:3]
+        self.feet_quat = self.body_states[:, self.feet_indices, 3:7]
 
         self.contact_forces = gymtorch.wrap_tensor(net_contact_forces).view(self.num_envs, -1, 3) # shape: num_envs, num_bodies, xyz axis
 

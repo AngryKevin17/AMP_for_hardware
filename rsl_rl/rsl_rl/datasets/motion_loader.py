@@ -16,12 +16,12 @@ class AMPLoader:
 
     POS_SIZE = 3
     ROT_SIZE = 4
-    JOINT_POS_SIZE = 12
-    TAR_TOE_POS_LOCAL_SIZE = 12
+    JOINT_POS_SIZE = 13
+    TAR_TOE_POS_LOCAL_SIZE = 6
     LINEAR_VEL_SIZE = 3
     ANGULAR_VEL_SIZE = 3
-    JOINT_VEL_SIZE = 12
-    TAR_TOE_VEL_LOCAL_SIZE = 12
+    JOINT_VEL_SIZE = 13
+    TAR_TOE_VEL_LOCAL_SIZE = 6
 
     ROOT_POS_START_IDX = 0
     ROOT_POS_END_IDX = ROOT_POS_START_IDX + POS_SIZE
@@ -78,7 +78,7 @@ class AMPLoader:
             with open(motion_file, "r") as f:
                 motion_json = json.load(f)
                 motion_data = np.array(motion_json["Frames"])
-                motion_data = self.reorder_from_pybullet_to_isaac(motion_data)
+                # motion_data = self.reorder_from_pybullet_to_isaac(motion_data)
 
                 # Normalize and standardize quaternions.
                 for f_i in range(motion_data.shape[0]):

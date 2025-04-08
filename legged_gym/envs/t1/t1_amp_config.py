@@ -31,16 +31,17 @@ import glob
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-MOTION_FILES = glob.glob('datasets/mocap_motions/*')
+MOTION_FILES = glob.glob('datasets/t1/*')
 
 
-class A1AMPCfg( LeggedRobotCfg ):
+class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
         num_envs = 5480
         include_history_steps = None  # Number of steps of history to include.
-        num_observations = 42
-        num_privileged_obs = 48
+        num_observations = 45
+        num_privileged_obs = 51
+        num_actions = 13
         reference_state_initialization = True
         reference_state_initialization_prob = 0.85
         amp_motion_files = MOTION_FILES
@@ -48,44 +49,46 @@ class A1AMPCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
-            'FL_hip_joint': 0.0,   # [rad]
-            'RL_hip_joint': 0.0,   # [rad]
-            'FR_hip_joint': 0.0 ,  # [rad]
-            'RR_hip_joint': 0.0,   # [rad]
-
-            'FL_thigh_joint': 0.9,     # [rad]
-            'RL_thigh_joint': 0.9,   # [rad]
-            'FR_thigh_joint': 0.9,     # [rad]
-            'RR_thigh_joint': 0.9,   # [rad]
-
-            'FL_calf_joint': -1.8,   # [rad]
-            'RL_calf_joint': -1.8,    # [rad]
-            'FR_calf_joint': -1.8,  # [rad]
-            'RR_calf_joint': -1.8,    # [rad]
+            'Waist': 0.,
+            'Left_Hip_Pitch': -0.2,
+            'Left_Hip_Roll': 0.,
+            'Left_Hip_Yaw': 0.,
+            'Left_Knee_Pitch': 0.4,
+            'Left_Ankle_Pitch': -0.25,
+            'Left_Ankle_Roll': 0.,
+            'Right_Hip_Pitch': -0.2,
+            'Right_Hip_Roll': 0.,
+            'Right_Hip_Yaw': 0.,
+            'Right_Knee_Pitch': 0.4,
+            'Right_Ankle_Pitch': -0.25,
+            'Right_Ankle_Roll': 0.,
         }
 
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
         control_type = 'P'
-        stiffness = {'joint': 80.}  # [N*m/rad]
-        damping = {'joint': 1.0}     # [N*m*s/rad]
+        stiffness = {'Waist': 200.0, 'Hip': 200.0, 'Knee': 200.0,
+                     'Ankle': 100.0}
+        damping = {'Waist': 2.0, 'Hip': 2.0, 'Knee': 2.0,
+                     'Ankle': 1.0}
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
-        decimation = 6
+        decimation = 4
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane'
         measure_heights = False
 
     class asset( LeggedRobotCfg.asset ):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/a1/urdf/a1.urdf'
-        foot_name = "foot"
-        penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = [
-            "base", "FL_calf", "FR_calf", "RL_calf", "RR_calf",
-            "FL_thigh", "FR_thigh", "RL_thigh", "RR_thigh"]
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.urdf'
+        foot_name = 'foot_link'
+        knee_name = 'Shank'
+
+        terminate_after_contacts_on = ['Trunk']
+        penalize_contacts_on = ["Trunk"]
         self_collisions = 0 # 1 to disable, 0 to enable...bitwise filter
+        flip_visual_attachments = False
   
     class domain_rand:
         randomize_friction = True
@@ -114,6 +117,8 @@ class A1AMPCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.25
         class scales( LeggedRobotCfg.rewards.scales ):
+            survival = 1.0
+            dof_ref = 0.0
             termination = 0.0
             tracking_lin_vel = 1.5 * 1. / (.005 * 6)
             tracking_ang_vel = 0.5 * 1. / (.005 * 6)
@@ -143,7 +148,7 @@ class A1AMPCfg( LeggedRobotCfg ):
             ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
-class A1AMPCfgPPO( LeggedRobotCfgPPO ):
+class T1AMPCfgPPO( LeggedRobotCfgPPO ):
     runner_class_name = 'AMPOnPolicyRunner'
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
@@ -153,7 +158,7 @@ class A1AMPCfgPPO( LeggedRobotCfgPPO ):
 
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 'a1_amp_example'
+        experiment_name = 't1_amp_example'
         algorithm_class_name = 'AMPPPO'
         policy_class_name = 'ActorCritic'
         max_iterations = 500000 # number of policy updates
@@ -164,6 +169,7 @@ class A1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_task_reward_lerp = 0.3
         amp_discr_hidden_dims = [1024, 512]
 
-        min_normalized_std = [0.05, 0.02, 0.05] * 4
+        # min_normalized_std = [0.05, 0.02, 0.05] * 4
+        min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
 
   
