@@ -136,6 +136,16 @@ class T1AMPCfg( LeggedRobotCfg ):
             stand_still = 0.0
             dof_pos_limits = 0.0
 
+    class normalization:
+        class obs_scales:
+            lin_vel = 2.0
+            ang_vel = 0.25
+            dof_pos = 1.0
+            dof_vel = 0.05
+            height_measurements = 5.0
+        clip_observations = 18.
+        clip_actions = 5.
+
     class commands:
         curriculum = False
         max_curriculum = 1.
@@ -171,5 +181,6 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
 
         # min_normalized_std = [0.05, 0.02, 0.05] * 4
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
+        # min_normalized_std = [0.02] * 13
 
   
