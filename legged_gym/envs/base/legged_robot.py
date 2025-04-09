@@ -278,7 +278,7 @@ class LeggedRobot(BaseTask):
 
     def get_amp_observations(self):
         joint_pos = self.dof_pos
-        foot_pos = self.feet_pos.view(self.num_envs, -1)
+        foot_pos = self.feet_pos.view(self.num_envs, -1) - self.root_states[:, 0:3].repeat(1, 2).view(self.num_envs, -1)
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel

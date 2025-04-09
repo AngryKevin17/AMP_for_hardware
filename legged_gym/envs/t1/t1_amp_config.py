@@ -117,11 +117,11 @@ class T1AMPCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.25
         class scales( LeggedRobotCfg.rewards.scales ):
-            survival = 1.0
+            survival = 5.0
             dof_ref = 0.0
             termination = 0.0
-            tracking_lin_vel = 1.5 * 1. / (.005 * 6)
-            tracking_ang_vel = 0.5 * 1. / (.005 * 6)
+            tracking_lin_vel = 10.0
+            tracking_ang_vel = 10.0
             lin_vel_z = 0.0
             ang_vel_xy = 0.0
             orientation = 0.0
