@@ -87,6 +87,7 @@ class T1AMPCfg( LeggedRobotCfg ):
 
         terminate_after_contacts_on = ['Trunk']
         penalize_contacts_on = ["Trunk"]
+        terminate_height = 0.4 # [m]
         self_collisions = 0 # 1 to disable, 0 to enable...bitwise filter
         flip_visual_attachments = False
   
@@ -115,13 +116,13 @@ class T1AMPCfg( LeggedRobotCfg ):
 
     class rewards( LeggedRobotCfg.rewards ):
         soft_dof_pos_limit = 0.9
-        base_height_target = 0.25
+        base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
-            survival = 5.0
+            survival = 20.0
             dof_ref = 0.0
             termination = 0.0
-            tracking_lin_vel = 10.0
-            tracking_ang_vel = 10.0
+            tracking_lin_vel = 100.0
+            tracking_ang_vel = 0.0
             lin_vel_z = 0.0
             ang_vel_xy = 0.0
             orientation = 0.0
@@ -153,9 +154,11 @@ class T1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [-1.0, 2.0] # min max [m/s]
-            lin_vel_y = [-0.3, 0.3]   # min max [m/s]
-            ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
+            lin_vel_x = [-0.5, 1.0] # min max [m/s]
+            # lin_vel_y = [-0.3, 0.3]   # min max [m/s]
+            lin_vel_y = [-0., 0.]   # min max [m/s]
+            # ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
+            ang_vel_yaw = [-0., 0.]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
 class T1AMPCfgPPO( LeggedRobotCfgPPO ):
@@ -168,7 +171,7 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
 
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 't1_amp_example'
+        experiment_name = 't1_amp'
         algorithm_class_name = 'AMPPPO'
         policy_class_name = 'ActorCritic'
         max_iterations = 500000 # number of policy updates
@@ -177,7 +180,7 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_motion_files = MOTION_FILES
         amp_num_preload_transitions = 2000000
         amp_task_reward_lerp = 0.3
-        amp_discr_hidden_dims = [1024, 512]
+        amp_discr_hidden_dims = [512, 512]
 
         # min_normalized_std = [0.05, 0.02, 0.05] * 4
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
