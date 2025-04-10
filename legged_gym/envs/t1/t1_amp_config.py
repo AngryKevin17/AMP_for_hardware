@@ -136,6 +136,8 @@ class T1AMPCfg( LeggedRobotCfg ):
             action_rate = -1.0
             stand_still = 0.0
             dof_pos_limits = 0.0
+        
+        tracking_sigma = 0.1 # tracking reward = exp(-error^2/sigma)
 
     class normalization:
         class obs_scales:
@@ -179,11 +181,13 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_reward_coef = 2.0
         amp_motion_files = MOTION_FILES
         amp_num_preload_transitions = 2000000
-        amp_task_reward_lerp = 0.7
+        amp_task_reward_lerp = 0.5
         amp_discr_hidden_dims = [512, 512]
 
         # min_normalized_std = [0.05, 0.02, 0.05] * 4
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
         # min_normalized_std = [0.02] * 13
+
+        use_wandb = True
 
   
