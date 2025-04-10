@@ -28,6 +28,18 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
    -  `cd AMP_for_hardware/rsl_rl && pip install -e .` 
 5. Install legged_gym
    - `cd ../ && pip install -e .`
+6. Configure the environment to handle shared libraries
+    ```sh
+    $ cd $CONDA_PREFIX
+    $ mkdir -p ./etc/conda/activate.d
+    $ vim ./etc/conda/activate.d/env_vars.sh  # Add the following line
+    export OLD_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib
+    $ mkdir -p ./etc/conda/deactivate.d
+    $ vim ./etc/conda/deactivate.d/env_vars.sh  # Add the following line
+    export LD_LIBRARY_PATH=${OLD_LD_LIBRARY_PATH}
+    unset OLD_LD_LIBRARY_PATH
+    ```
 
 ### CODE STRUCTURE ###
 1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
@@ -38,7 +50,7 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
 
 ### Usage ###
 1. Train:  
-  ```python legged_gym/scripts/train.py --task=a1_amp``
+  ```python legged_gym/scripts/train.py --task=t1_amp``
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
     -  To run headless (no rendering) add `--headless`.
     - **Important**: To improve performance, once the training starts press `v` to stop the rendering. You can then enable it later to check the progress.
@@ -54,11 +66,11 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
      - --seed SEED:  Random seed.
      - --max_iterations MAX_ITERATIONS:  Maximum number of training iterations.
 2. Play a trained policy:  
-```python legged_gym/scripts/play.py --task=a1_amp```
+```python legged_gym/scripts/play.py --task=t1_amp```
     - By default the loaded policy is the last model of the last run of the experiment folder.
     - Other runs/model iteration can be selected by setting `load_run` and `checkpoint` in the train config.
 3. Record video of a trained policy
-```python legged_gym/scripts/record_policy.py --task=a1_amp```
+```python legged_gym/scripts/record_policy.py --task=t1_amp```
     - This saves a video of the in the base directory.
 
 ### Adding a new environment ###
