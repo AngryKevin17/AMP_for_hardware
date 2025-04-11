@@ -14,8 +14,8 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended). i.e. with conda:
     - `conda create -n amp_hw python==3.8`
     - `conda activate amp_hw`
-2. Install pytorch 1.12 with cuda-11.3:
-    - `conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch`
+2. Install pytorch with cuda:
+    - `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`
     - `pip install pybullet==3.2.1 opencv-python==4.5.5.64 tensorboard`
     - `conda install numpy=1.23`
 3. Install Isaac Gym

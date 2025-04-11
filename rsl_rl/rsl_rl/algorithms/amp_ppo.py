@@ -155,6 +155,7 @@ class AMPPPO:
         mean_surrogate_loss = 0
         mean_amp_loss = 0
         mean_grad_pen_loss = 0
+        mean_bound_loss = 0
         mean_policy_pred = 0
         mean_expert_pred = 0
         if self.actor_critic.is_recurrent:
@@ -234,13 +235,17 @@ class AMPPPO:
                 amp_loss = 0.5 * (expert_loss + policy_loss)
                 grad_pen_loss = self.discriminator.compute_grad_pen(
                     *sample_amp_expert, lambda_=10)
+                
+                # Bound Loss
+                soft_bound = 1.0
+                bound_loss = torch.clip(mu_batch - soft_bound, min=0.0).square().mean() + torch.clip(mu_batch + soft_bound, max=0.0).square().mean()
 
                 # Compute total loss.
                 loss = (
                     surrogate_loss +
                     self.value_loss_coef * value_loss -
                     self.entropy_coef * entropy_batch.mean() +
-                    amp_loss + grad_pen_loss)
+                    amp_loss + grad_pen_loss + bound_loss)
 
                 # Gradient step
                 self.optimizer.zero_grad()
@@ -259,6 +264,7 @@ class AMPPPO:
                 mean_surrogate_loss += surrogate_loss.item()
                 mean_amp_loss += amp_loss.item()
                 mean_grad_pen_loss += grad_pen_loss.item()
+                mean_bound_loss += bound_loss.item()
                 mean_policy_pred += policy_d.mean().item()
                 mean_expert_pred += expert_d.mean().item()
 
@@ -267,8 +273,9 @@ class AMPPPO:
         mean_surrogate_loss /= num_updates
         mean_amp_loss /= num_updates
         mean_grad_pen_loss /= num_updates
+        mean_bound_loss /= num_updates
         mean_policy_pred /= num_updates
         mean_expert_pred /= num_updates
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_amp_loss, mean_grad_pen_loss, mean_policy_pred, mean_expert_pred
+        return mean_value_loss, mean_surrogate_loss, mean_amp_loss, mean_grad_pen_loss, mean_bound_loss, mean_policy_pred, mean_expert_pred
