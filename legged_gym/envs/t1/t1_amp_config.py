@@ -134,7 +134,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             collision = 0.0
             feet_stumble = 0.0 
             action_rate = -1.0
-            stand_still = 0.0
+            stand_still = -1.0
             dof_pos_limits = 0.0
         
         tracking_sigma = 0.1 # tracking reward = exp(-error^2/sigma)
