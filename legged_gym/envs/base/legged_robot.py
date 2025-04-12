@@ -279,12 +279,12 @@ class LeggedRobot(BaseTask):
 
     def get_amp_observations(self):
         joint_pos = self.dof_pos
-        foot_pos = self.feet_pos.view(self.num_envs, -1) - self.root_states[:, 0:3].repeat(1, 2).view(self.num_envs, -1) #TODO
+        foot_pos = self.foot_positions_in_base_frame()
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel
         z_pos = self.root_states[:, 2:3]
-        return torch.cat((joint_pos, base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
+        return torch.cat((joint_pos, foot_pos, base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
 
     def create_sim(self):
         """ Creates simulation, terrain and evironments
@@ -695,9 +695,12 @@ class LeggedRobot(BaseTask):
         off_z = torch.sin(theta_ab) * off_y_hip + torch.cos(theta_ab) * off_z_hip
         return torch.stack([off_x, off_y, off_z], dim=-1)
 
-    def foot_positions_in_base_frame(self, foot_angles):
-        # TODO
-        foot_positions = torch.zeros(self.num_envs, 12, dtype=torch.float, device=self.device, requires_grad=False)
+    def foot_positions_in_base_frame(self):
+        left_foot_positions = self.feet_pos[:, 0] - self.root_states[:, :3]
+        right_foot_positions = self.feet_pos[:, 1] - self.root_states[:, :3]
+        left_foot_positions = quat_rotate(self.base_quat, left_foot_positions)
+        right_foot_positions = quat_rotate(self.base_quat, right_foot_positions)
+        foot_positions = torch.cat((left_foot_positions, right_foot_positions), dim=1)
         return foot_positions
 
     def _prepare_reward_function(self):
