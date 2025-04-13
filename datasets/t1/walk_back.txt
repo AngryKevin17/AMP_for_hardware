@@ -1,6 +1,6 @@
 {
 "FrameDuration": 0.02,
-"MotionWeight": 1.0,
+"MotionWeight": 0.5,
 
 "Frames":
 [
