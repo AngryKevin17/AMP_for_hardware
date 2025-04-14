@@ -979,10 +979,6 @@ class LeggedRobot(BaseTask):
         # Reward survival
         return torch.ones(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
     
-    def _reward_dof_ref(self):
-        # Reward dof position reference
-        return torch.sum(torch.square(self.dof_pos - self.default_dof_pos), dim=1)
-    
     def _reward_lin_vel_z(self):
         # Penalize z axis base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
@@ -1047,7 +1043,8 @@ class LeggedRobot(BaseTask):
     def _reward_tracking_ang_vel(self):
         # Tracking of angular velocity commands (yaw) 
         ang_vel_error = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
-        return torch.exp(-ang_vel_error/self.cfg.rewards.tracking_sigma)
+        # return torch.exp(-ang_vel_error/self.cfg.rewards.tracking_sigma)
+        return ang_vel_error
 
     def _reward_feet_air_time(self):
         # Reward long steps

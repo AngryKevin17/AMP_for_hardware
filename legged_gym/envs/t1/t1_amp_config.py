@@ -119,10 +119,9 @@ class T1AMPCfg( LeggedRobotCfg ):
         base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
             survival = 20.0
-            dof_ref = 0.0
             termination = 0.0
             tracking_lin_vel = 100.0
-            tracking_ang_vel = 20.0
+            tracking_ang_vel = -2.0
             lin_vel_z = 0.0
             ang_vel_xy = -1.0
             orientation = 0.0
@@ -156,7 +155,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [-0.5, 2.0] # min max [m/s]
+            lin_vel_x = [0.0, 2.0] # min max [m/s]
             # lin_vel_y = [-0.3, 0.3]   # min max [m/s]
             lin_vel_y = [-0., 0.]   # min max [m/s]
             # ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
