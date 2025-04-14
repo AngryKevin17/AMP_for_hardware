@@ -37,7 +37,7 @@ MOTION_FILES = glob.glob('datasets/t1/*')
 class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
-        num_envs = 5480
+        num_envs = 8192
         include_history_steps = None  # Number of steps of history to include.
         num_observations = 45
         num_privileged_obs = 51
@@ -124,7 +124,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             tracking_lin_vel = 100.0
             tracking_ang_vel = 20.0
             lin_vel_z = 0.0
-            ang_vel_xy = 0.0
+            ang_vel_xy = -1.0
             orientation = 0.0
             torques = 0.0
             dof_vel = 0.0
