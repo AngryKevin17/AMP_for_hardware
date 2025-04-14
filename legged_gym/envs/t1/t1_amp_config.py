@@ -160,7 +160,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             # lin_vel_y = [-0.3, 0.3]   # min max [m/s]
             lin_vel_y = [-0., 0.]   # min max [m/s]
             # ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
-            ang_vel_yaw = [-0., 0.]    # min max [rad/s]
+            ang_vel_yaw = [-1.0, 1.0]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
 class T1AMPCfgPPO( LeggedRobotCfgPPO ):
