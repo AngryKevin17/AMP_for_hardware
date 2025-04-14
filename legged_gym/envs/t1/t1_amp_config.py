@@ -37,7 +37,7 @@ MOTION_FILES = glob.glob('datasets/mocap_motions/*')
 class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
-        num_envs = 4096
+        num_envs = 8192
         include_history_steps = None  # Number of steps of history to include.
         num_observations = 48
         num_privileged_obs = 51
@@ -121,7 +121,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             termination = 0.0
             tracking_lin_vel = 75
             tracking_lin_y_vel = -1
-            tracking_ang_vel = -1
+            tracking_ang_vel = -10
             # tracking_lin_vel = 1.5
             # tracking_ang_vel = 0.5
             survival = 0.0 # 存活
@@ -161,7 +161,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [0.0, 1.0] # min max [m/s]
+            lin_vel_x = [0.0, 2.0] # min max [m/s]
             lin_vel_y = [-0.0, 0.0]   # min max [m/s]
             ang_vel_yaw = [0.0, 0.0]    # min max [rad/s]
             heading = [-3.14, 3.14]
@@ -189,7 +189,7 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_task_reward_lerp = 0.5
         amp_discr_hidden_dims = [1024, 512]
 
-        # disc_grad_penalty = 5 # original 10
+        disc_grad_penalty = 10 # original 10
 
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
   
