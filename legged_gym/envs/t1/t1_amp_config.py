@@ -31,23 +31,24 @@ import glob
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-MOTION_FILES = glob.glob('datasets/t1/*')
+MOTION_FILES = glob.glob('datasets/mocap_motions/*')
 
 
 class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
-        num_envs = 8192
+        num_envs = 4096
         include_history_steps = None  # Number of steps of history to include.
-        num_observations = 45
+        num_observations = 48
         num_privileged_obs = 51
         num_actions = 13
+        env_spacing = 1.0
         reference_state_initialization = True
         reference_state_initialization_prob = 0.85
         amp_motion_files = MOTION_FILES
 
     class init_state( LeggedRobotCfg.init_state ):
-        pos = [0.0, 0.0, 0.42] # x,y,z [m]
+        pos = [0.0, 0.0, 0.72] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
             'Waist': 0.,
             'Left_Hip_Pitch': -0.2,
@@ -82,12 +83,11 @@ class T1AMPCfg( LeggedRobotCfg ):
 
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.urdf'
-        foot_name = 'foot_link'
+        # mujoco_file = '{LEGGED_GYM_ROOT_DIR}/resources/T1/T1_locomotion.xml'
+        foot_name = "foot_link"
         knee_name = 'Shank'
-
-        terminate_after_contacts_on = ['Trunk']
         penalize_contacts_on = ["Trunk"]
-        terminate_height = 0.4 # [m]
+        terminate_after_contacts_on = ["Trunk"]
         self_collisions = 0 # 1 to disable, 0 to enable...bitwise filter
         flip_visual_attachments = False
   
@@ -118,36 +118,41 @@ class T1AMPCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
-            survival = 20.0
-            dof_ref = 0.0
             termination = 0.0
-            tracking_lin_vel = 100.0
-            tracking_ang_vel = 20.0
-            lin_vel_z = 0.0
-            ang_vel_xy = -1.0
-            orientation = 0.0
-            torques = 0.0
-            dof_vel = 0.0
-            dof_acc = 0.0
-            base_height = -1.0
-            feet_air_time =  0.0
-            collision = 0.0
+            tracking_lin_vel = 75
+            tracking_lin_y_vel = -1
+            tracking_ang_vel = -1
+            # tracking_lin_vel = 1.5
+            # tracking_ang_vel = 0.5
+            survival = 0.0 # 存活
+            lin_vel_z = -0.0
+            ang_vel_xy = -0.0
+            orientation = -0.0
+            torques = -0.0000025
+            dof_vel = -0.0
+            dof_acc = -0.0
+            base_height = -1.0 
+            feet_air_time = 0.0
+            
             feet_stumble = 0.0 
-            action_rate = -1.0
-            stand_still = -1.0
-            dof_pos_limits = 0.0
-        
-        tracking_sigma = 0.1 # tracking reward = exp(-error^2/sigma)
+            action_rate = -0.0
+            stand_still = 0.0
+            dof_pos_limits = -1.0
+            # add
+            # torque_tiredness = -1.e-2
+            # dof_pos_ref= -1.e-2
+            # root_acc= -1.e-4
+            # collision = 0.0
+            # waist_pos= -1.
+            # feet_slip = -0.1
+            # feet_vel_z = -0.1
+            # feet_yaw_diff = -1.
+            # feet_yaw_mean = -1.
+            # feet_roll = -0.1
+            # feet_distance = -5.
+            # feet_swing = 2.5
+            # stand_still = -1.
 
-    class normalization:
-        class obs_scales:
-            lin_vel = 2.0
-            ang_vel = 0.25
-            dof_pos = 1.0
-            dof_vel = 0.05
-            height_measurements = 5.0
-        clip_observations = 18.
-        clip_actions = 5.
 
     class commands:
         curriculum = False
@@ -156,11 +161,9 @@ class T1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [-0.5, 2.0] # min max [m/s]
-            # lin_vel_y = [-0.3, 0.3]   # min max [m/s]
-            lin_vel_y = [-0., 0.]   # min max [m/s]
-            # ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
-            ang_vel_yaw = [-0., 0.]    # min max [rad/s]
+            lin_vel_x = [0.0, 1.0] # min max [m/s]
+            lin_vel_y = [-0.0, 0.0]   # min max [m/s]
+            ang_vel_yaw = [0.0, 0.0]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
 class T1AMPCfgPPO( LeggedRobotCfgPPO ):
@@ -170,24 +173,23 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_replay_buffer_size = 1000000
         num_learning_epochs = 5
         num_mini_batches = 4
+        # disc_coef = 5  # 5
+        # bounds_loss_coef = 2
 
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 't1_amp'
+        experiment_name = 't1_amp_example'
         algorithm_class_name = 'AMPPPO'
         policy_class_name = 'ActorCritic'
-        max_iterations = 500000 # number of policy updates
+        max_iterations = 300000 # number of policy updates
 
         amp_reward_coef = 2.0
         amp_motion_files = MOTION_FILES
         amp_num_preload_transitions = 2000000
         amp_task_reward_lerp = 0.5
-        amp_discr_hidden_dims = [512, 512]
+        amp_discr_hidden_dims = [1024, 512]
 
-        # min_normalized_std = [0.05, 0.02, 0.05] * 4
+        # disc_grad_penalty = 5 # original 10
+
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
-        # min_normalized_std = [0.02] * 13
-
-        use_wandb = True
-
   
