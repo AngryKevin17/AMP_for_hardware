@@ -175,13 +175,13 @@ if __name__ == '__main__':
             # else:
             mujoco_model_path = f'{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.xml'
             sim_duration = 20.0
-            dt = 0.005
-            decimation = 4
+            dt = 0.001
+            decimation = 20
 
         class robot_config:
             kps = np.array([200, 200, 200, 200, 200, 100, 100, 200, 200, 200, 200, 100,100], dtype=np.double)
             kds = np.array([2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1,1], dtype=np.double)
-            tau_limit = 200. * np.ones(13, dtype=np.double)
+            tau_limit = np.array([30, 45, 45, 30, 65, 24, 6, 45, 45, 30, 65, 24, 6], dtype=np.double)
 
     policy = torch.jit.load(args.load_model)
     run_mujoco(policy, Sim2simCfg())
