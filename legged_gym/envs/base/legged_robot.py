@@ -698,8 +698,8 @@ class LeggedRobot(BaseTask):
     def foot_positions_in_base_frame(self):
         left_foot_positions = self.feet_pos[:, 0] - self.root_states[:, :3]
         right_foot_positions = self.feet_pos[:, 1] - self.root_states[:, :3]
-        left_foot_positions = quat_rotate(self.base_quat, left_foot_positions)
-        right_foot_positions = quat_rotate(self.base_quat, right_foot_positions)
+        left_foot_positions = quat_rotate_inverse(self.base_quat, left_foot_positions)
+        right_foot_positions = quat_rotate_inverse(self.base_quat, right_foot_positions)
         foot_positions = torch.cat((left_foot_positions, right_foot_positions), dim=1)
         return foot_positions
 
