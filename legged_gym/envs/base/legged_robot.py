@@ -950,7 +950,7 @@ class LeggedRobot(BaseTask):
             [type]: [description]
         """
         if self.cfg.terrain.mesh_type == 'plane':
-            return torch.zeros(self.num_envs, 1, device=self.device, requires_grad=False)
+            return torch.zeros(root_state.shape[0], device=self.device, requires_grad=False)
         elif self.cfg.terrain.mesh_type == 'none':
             raise NameError("Can't measure height with terrain mesh type 'none'")
 
