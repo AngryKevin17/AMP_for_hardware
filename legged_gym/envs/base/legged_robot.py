@@ -284,7 +284,7 @@ class LeggedRobot(BaseTask):
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel
-        local_height = self._get_local_height(self.root_states[:, :2])
+        local_height = self._get_local_height(self.root_states[:, :2]).unsqueeze(1)
         z_pos = self.root_states[:, 2:3] - local_height
         return torch.cat((joint_pos, foot_pos, base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
 
@@ -1026,7 +1026,8 @@ class LeggedRobot(BaseTask):
 
     def _reward_base_height(self):
         # Penalize base height away from target
-        base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
+        local_height = self._get_local_height(self.root_states[:, :2])
+        base_height = self.root_states[:, 2] - local_height
         return torch.square(base_height - self.cfg.rewards.base_height_target)
     
     def _reward_torques(self):
