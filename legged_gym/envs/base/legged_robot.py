@@ -1011,7 +1011,7 @@ class LeggedRobot(BaseTask):
         points[:, :, 1] = grid_y.flatten()
         return points
     
-    def _get_local_height(self, point):
+    def _get_local_height(self, root_state):
         """ Samples height of the terrain at each robot.
 
         Args:
@@ -1021,10 +1021,11 @@ class LeggedRobot(BaseTask):
             [type]: [description]
         """
         if self.cfg.terrain.mesh_type == 'plane':
-            return torch.zeros(self.num_envs, 1, device=self.device, requires_grad=False)
+            return torch.zeros(root_state.shape[0], device=self.device, requires_grad=False)
         elif self.cfg.terrain.mesh_type == 'none':
             raise NameError("Can't measure height with terrain mesh type 'none'")
 
+        point = root_state[:, :2].clone()
         point += self.terrain.cfg.border_size
         point = (point/self.terrain.cfg.horizontal_scale).long()
         px = point[:, 0].view(-1)

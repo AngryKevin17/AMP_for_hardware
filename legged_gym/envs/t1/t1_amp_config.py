@@ -79,7 +79,6 @@ class T1AMPCfg( LeggedRobotCfg ):
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'trimesh'
-        vertical_scale = 0.002 # [m]
         measure_heights = False
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
         terrain_proportions = [0.3, 0.6, 0.0, 0.0, 0.1]
