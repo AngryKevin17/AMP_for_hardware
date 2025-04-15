@@ -95,7 +95,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         randomize_friction = True
         friction_range = [0.25, 1.75]
         randomize_base_mass = True
-        added_mass_range = [-1., 1.]
+        mass_range = [0.8, 1.2]
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.0
@@ -121,7 +121,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             survival = 20.0
             termination = 0.0
             tracking_lin_vel = 100.0
-            tracking_ang_vel = -2.0
+            tracking_ang_vel = 20.0
             lin_vel_z = 0.0
             ang_vel_xy = -1.0
             orientation = 0.0
@@ -136,7 +136,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             stand_still = -1.0
             dof_pos_limits = 0.0
         
-        tracking_sigma = 0.1 # tracking reward = exp(-error^2/sigma)
+        tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
 
     class normalization:
         class obs_scales:
@@ -172,6 +172,7 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
 
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
+        save_interval = 200 # check for potential saves every this many iterations
         experiment_name = 't1_amp'
         algorithm_class_name = 'AMPPPO'
         policy_class_name = 'ActorCritic'
