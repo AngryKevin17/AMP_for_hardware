@@ -940,7 +940,7 @@ class LeggedRobot(BaseTask):
         points[:, :, 1] = grid_y.flatten()
         return points
     
-    def _get_local_height(self, point):
+    def _get_local_height(self, root_state):
         """ Samples height of the terrain at each robot.
 
         Args:
@@ -954,6 +954,7 @@ class LeggedRobot(BaseTask):
         elif self.cfg.terrain.mesh_type == 'none':
             raise NameError("Can't measure height with terrain mesh type 'none'")
 
+        point = root_state[:, :2].clone()
         point += self.terrain.cfg.border_size
         point = (point/self.terrain.cfg.horizontal_scale).long()
         px = point[:, 0].view(-1)
