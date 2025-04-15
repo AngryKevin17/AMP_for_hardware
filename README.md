@@ -16,7 +16,7 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
     - `conda activate amp_hw`
 2. Install pytorch with cuda:
     - `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`
-    - `pip install pybullet==3.2.1 opencv-python==4.5.5.64 tensorboard`
+    - `pip install pybullet==3.2.1 opencv-python==4.5.5.64 tensorboard mujoco mujoco-python-viewer tqdm`
     - `conda install numpy=1.23`
 3. Install Isaac Gym
    - Download and install Isaac Gym Preview 4 (Preview 2 will not work!) from https://developer.nvidia.com/isaac-gym
@@ -72,6 +72,9 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
 3. Record video of a trained policy
 ```python legged_gym/scripts/record_policy.py --task=t1_amp```
     - This saves a video of the in the base directory.
+4. Sim2Sim test in Mujoco
+```python legged_gym/scripts/sim2sim.py --task=t1_amp --load_model=PATH_TO_EXPORTED_JIT_MODEL```
+    - PATH_TO_EXPORTED_JIT_MODEL: LEGGED_GYM_ROOT_DIR/logs/t1_amp/exported/policies/policy_1.pt
 
 ### Adding a new environment ###
 The base environment `legged_robot` implements a rough terrain locomotion task. The corresponding cfg does not specify a robot asset (URDF/ MJCF) and no reward scales. 

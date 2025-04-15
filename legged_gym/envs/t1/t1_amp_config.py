@@ -95,7 +95,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         randomize_friction = True
         friction_range = [0.25, 1.75]
         randomize_base_mass = True
-        added_mass_range = [-1., 1.]
+        mass_range = [0.8, 1.2]
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.0
@@ -121,7 +121,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             termination = 0.0
             tracking_lin_vel = 75
             tracking_lin_y_vel = -1
-            tracking_ang_vel = -1
+            tracking_ang_vel = -5
             # tracking_lin_vel = 1.5
             # tracking_ang_vel = 0.5
             survival = 15.0 # 存活
@@ -135,24 +135,21 @@ class T1AMPCfg( LeggedRobotCfg ):
             feet_air_time = 0.0
             
             feet_stumble = 0.0 
-            action_rate = -0.0
-            stand_still = 0.0
+            action_rate = -0.1
+            stand_still = -1.0
             dof_pos_limits = -1.0
-            # add
-            # torque_tiredness = -1.e-2
-            # dof_pos_ref= -1.e-2
-            # root_acc= -1.e-4
-            # collision = 0.0
-            # waist_pos= -1.
-            # feet_slip = -0.1
-            # feet_vel_z = -0.1
-            # feet_yaw_diff = -1.
-            # feet_yaw_mean = -1.
-            # feet_roll = -0.1
-            # feet_distance = -5.
-            # feet_swing = 2.5
-            # stand_still = -1.
+        
+        tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
 
+    class normalization:
+        class obs_scales:
+            lin_vel = 2.0
+            ang_vel = 0.25
+            dof_pos = 1.0
+            dof_vel = 0.05
+            height_measurements = 5.0
+        clip_observations = 18.
+        clip_actions = 4.
 
     class commands:
         curriculum = False
@@ -189,7 +186,7 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         amp_task_reward_lerp = 0.5
         amp_discr_hidden_dims = [1024, 512]
 
-        disc_grad_penalty = 10 # original 10
+        # disc_grad_penalty = 10 # original 10
 
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
   
