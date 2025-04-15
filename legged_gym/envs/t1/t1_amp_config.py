@@ -121,10 +121,10 @@ class T1AMPCfg( LeggedRobotCfg ):
             termination = 0.0
             tracking_lin_vel = 75
             tracking_lin_y_vel = -1
-            tracking_ang_vel = -10
+            tracking_ang_vel = -1
             # tracking_lin_vel = 1.5
             # tracking_ang_vel = 0.5
-            survival = 0.0 # 存活
+            survival = 15.0 # 存活
             lin_vel_z = -0.0
             ang_vel_xy = -0.0
             orientation = -0.0
