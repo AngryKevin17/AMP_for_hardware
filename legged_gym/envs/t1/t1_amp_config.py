@@ -78,8 +78,11 @@ class T1AMPCfg( LeggedRobotCfg ):
         decimation = 4
 
     class terrain( LeggedRobotCfg.terrain ):
-        mesh_type = 'plane'
+        mesh_type = 'trimesh'
+        vertical_scale = 0.002 # [m]
         measure_heights = False
+        # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+        terrain_proportions = [0.3, 0.6, 0.0, 0.0, 0.1]
 
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.urdf'
