@@ -77,7 +77,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         decimation = 4
 
     class terrain( LeggedRobotCfg.terrain ):
-        mesh_type = 'trimesh'
+        mesh_type = 'plane'
         curriculum = False
         measure_heights = False
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
