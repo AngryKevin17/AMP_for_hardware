@@ -517,7 +517,7 @@ class LeggedRobot(BaseTask):
         root_pos[:, :2] = root_pos[:, :2] + self.env_origins[env_ids, :2]
         self.root_states[env_ids, :3] = root_pos
         local_height = self._get_local_height(self.root_states[env_ids, :2])
-        self.root_states[env_ids, 2] += local_height # add the height of the terrain
+        self.root_states[env_ids, 2] += local_height + 0.03
         root_orn = AMPLoader.get_root_rot_batch(frames)
         self.root_states[env_ids, 3:7] = root_orn
         self.root_states[env_ids, 7:10] = quat_rotate(root_orn, AMPLoader.get_linear_vel_batch(frames))

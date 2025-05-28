@@ -81,7 +81,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         curriculum = False
         measure_heights = False
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        terrain_proportions = [0.3, 0.5, 0.0, 0.0, 0.2]
+        terrain_proportions = [0.0, 0.5, 0.0, 0.0, 0.5]
 
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.urdf'
