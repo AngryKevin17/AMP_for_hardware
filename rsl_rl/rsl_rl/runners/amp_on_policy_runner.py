@@ -36,6 +36,8 @@ import statistics
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import torch
+import wandb
+from datetime import datetime
 
 from rsl_rl.algorithms import AMPPPO, PPO
 from rsl_rl.modules import ActorCritic, ActorCriticRecurrent
@@ -52,6 +54,7 @@ class AMPOnPolicyRunner:
                  log_dir=None,
                  device='cpu'):
 
+        self.all_cfg = train_cfg
         self.cfg=train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
@@ -100,12 +103,25 @@ class AMPOnPolicyRunner:
         self.tot_timesteps = 0
         self.tot_time = 0
         self.current_learning_iteration = 0
+        self.wandb_run_name = (
+            datetime.now().strftime("%b%d_%H-%M-%S")
+            + "_"
+            + train_cfg["runner"]["experiment_name"]
+            + "_"
+            + train_cfg["runner"]["run_name"]
+        )
 
         _, _ = self.env.reset()
     
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
         if self.log_dir is not None and self.writer is None:
+            wandb.init(
+                project="AMP_for_T1",
+                sync_tensorboard=True,
+                name=self.wandb_run_name,
+                config=self.all_cfg,
+            )
             self.writer = SummaryWriter(log_dir=self.log_dir, flush_secs=10)
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
@@ -208,6 +224,8 @@ class AMPOnPolicyRunner:
         self.writer.add_scalar('Perf/total_fps', fps, locs['it'])
         self.writer.add_scalar('Perf/collection time', locs['collection_time'], locs['it'])
         self.writer.add_scalar('Perf/learning_time', locs['learn_time'], locs['it'])
+        self.writer.add_scalar('Perf/mean_policy_pred', locs['mean_policy_pred'], locs['it'])
+        self.writer.add_scalar('Perf/mean_expert_pred', locs['mean_expert_pred'], locs['it'])
         if len(locs['rewbuffer']) > 0:
             self.writer.add_scalar('Train/mean_reward', statistics.mean(locs['rewbuffer']), locs['it'])
             self.writer.add_scalar('Train/mean_episode_length', statistics.mean(locs['lenbuffer']), locs['it'])

@@ -16,7 +16,7 @@ Paper: https://drive.google.com/file/d/1kFm79nMmrc0ZIiH0XO8_HV-fj73agheO/view?us
     - `conda activate amp_hw`
 2. Install pytorch with cuda:
     - `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`
-    - `pip install pybullet==3.2.1 opencv-python==4.5.5.64 tensorboard mujoco mujoco-python-viewer tqdm`
+    - `pip install pybullet==3.2.1 opencv-python==4.5.5.64 tensorboard mujoco mujoco-python-viewer tqdm wandb`
     - `conda install numpy=1.23`
 3. Install Isaac Gym
    - Download and install Isaac Gym Preview 4 (Preview 2 will not work!) from https://developer.nvidia.com/isaac-gym

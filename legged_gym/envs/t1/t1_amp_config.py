@@ -98,7 +98,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         randomize_friction = True
         friction_range = [0.25, 1.75]
         randomize_base_mass = True
-        mass_range = [0.9, 1.1]
+        added_mass_range = [-1., 1.]
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.0
@@ -136,7 +136,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             collision = 0.0
             feet_stumble = 0.0 
             action_rate = -1.0
-            stand_still = -1.0
+            stand_still = 0.0
             dof_pos_limits = 0.0
         
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
@@ -190,7 +190,3 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         # min_normalized_std = [0.05, 0.02, 0.05] * 4
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
         # min_normalized_std = [0.02] * 13
-
-        use_wandb = True
-
-  
