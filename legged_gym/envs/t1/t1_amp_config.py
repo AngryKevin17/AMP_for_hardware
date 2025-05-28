@@ -37,7 +37,7 @@ MOTION_FILES = glob.glob('datasets/t1/*')
 class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
-        num_envs = 8192
+        num_envs = 16384
         include_history_steps = None  # Number of steps of history to include.
         num_observations = 45
         num_privileged_obs = 51
@@ -77,8 +77,11 @@ class T1AMPCfg( LeggedRobotCfg ):
         decimation = 4
 
     class terrain( LeggedRobotCfg.terrain ):
-        mesh_type = 'plane'
+        mesh_type = 'trimesh'
+        curriculum = False
         measure_heights = False
+        # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+        terrain_proportions = [0.3, 0.5, 0.0, 0.0, 0.2]
 
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.urdf'
@@ -95,7 +98,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         randomize_friction = True
         friction_range = [0.25, 1.75]
         randomize_base_mass = True
-        mass_range = [0.8, 1.2]
+        mass_range = [0.9, 1.1]
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.0
@@ -129,7 +132,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             dof_vel = 0.0
             dof_acc = 0.0
             base_height = -1.0
-            feet_air_time =  0.0
+            feet_air_time = 0.0
             collision = 0.0
             feet_stumble = 0.0 
             action_rate = -1.0

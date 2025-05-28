@@ -173,7 +173,8 @@ class LeggedRobot(BaseTask):
         """ Check if environments need to be reset
         """
         self.reset_buf = torch.any(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1., dim=1)
-        self.reset_buf |= self.root_states[:, 2] < self.cfg.asset.terminate_height
+        local_height = self._get_local_height(self.root_states)
+        self.reset_buf |= (self.root_states[:, 2] - local_height) < self.cfg.asset.terminate_height
         self.time_out_buf = self.episode_length_buf > self.max_episode_length # no terminal reward for time-outs
         self.reset_buf |= self.time_out_buf
 
@@ -283,7 +284,8 @@ class LeggedRobot(BaseTask):
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel
-        z_pos = self.root_states[:, 2:3]
+        local_height = self._get_local_height(self.root_states[:, :2]).unsqueeze(1)
+        z_pos = self.root_states[:, 2:3] - local_height
         return torch.cat((joint_pos, foot_pos, base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
 
     def create_sim(self):
@@ -514,6 +516,8 @@ class LeggedRobot(BaseTask):
         root_pos = AMPLoader.get_root_pos_batch(frames)
         root_pos[:, :2] = root_pos[:, :2] + self.env_origins[env_ids, :2]
         self.root_states[env_ids, :3] = root_pos
+        local_height = self._get_local_height(self.root_states[env_ids, :2])
+        self.root_states[env_ids, 2] += local_height # add the height of the terrain
         root_orn = AMPLoader.get_root_rot_batch(frames)
         self.root_states[env_ids, 3:7] = root_orn
         self.root_states[env_ids, 7:10] = quat_rotate(root_orn, AMPLoader.get_linear_vel_batch(frames))
@@ -935,6 +939,36 @@ class LeggedRobot(BaseTask):
         points[:, :, 0] = grid_x.flatten()
         points[:, :, 1] = grid_y.flatten()
         return points
+    
+    def _get_local_height(self, root_state):
+        """ Samples height of the terrain at each robot.
+
+        Args:
+            point (List[tensor]): Points at which to sample the height. Shape: (num_envs, 2)
+
+        Returns:
+            [type]: [description]
+        """
+        if self.cfg.terrain.mesh_type == 'plane':
+            return torch.zeros(root_state.shape[0], device=self.device, requires_grad=False)
+        elif self.cfg.terrain.mesh_type == 'none':
+            raise NameError("Can't measure height with terrain mesh type 'none'")
+
+        point = root_state[:, :2].clone()
+        point += self.terrain.cfg.border_size
+        point = (point/self.terrain.cfg.horizontal_scale).long()
+        px = point[:, 0].view(-1)
+        py = point[:, 1].view(-1)
+        px = torch.clip(px, 0, self.height_samples.shape[0]-2)
+        py = torch.clip(py, 0, self.height_samples.shape[1]-2)
+        heights1 = self.height_samples[px, py]
+        heights2 = self.height_samples[px+1, py]
+        heights3 = self.height_samples[px, py+1]
+        heights = torch.min(heights1, heights2)
+        heights = torch.min(heights, heights3)
+
+        return heights * self.terrain.cfg.vertical_scale
+        
 
     def _get_heights(self, env_ids=None):
         """ Samples heights of the terrain at required points around each robot.
@@ -993,7 +1027,8 @@ class LeggedRobot(BaseTask):
 
     def _reward_base_height(self):
         # Penalize base height away from target
-        base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
+        local_height = self._get_local_height(self.root_states[:, :2])
+        base_height = self.root_states[:, 2] - local_height
         return torch.square(base_height - self.cfg.rewards.base_height_target)
     
     def _reward_torques(self):
