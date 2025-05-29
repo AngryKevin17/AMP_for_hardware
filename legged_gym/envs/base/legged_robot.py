@@ -273,8 +273,8 @@ class LeggedRobot(BaseTask):
             self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_scale_vec
 
         # Remove velocity observations from policy observation.
-        if self.num_obs == self.num_privileged_obs - 6:
-            self.obs_buf = self.privileged_obs_buf[:, 6:]
+        if self.num_obs == self.num_privileged_obs - 3:
+            self.obs_buf = self.privileged_obs_buf[:, 3:]
         else:
             self.obs_buf = torch.clone(self.privileged_obs_buf)
 
@@ -1034,6 +1034,18 @@ class LeggedRobot(BaseTask):
     def _reward_torques(self):
         # Penalize torques
         return torch.sum(torch.square(self.torques), dim=1)
+
+    def _reward_torque_tiredness(self):
+        # Penalize torque tiredness
+        return torch.sum(torch.square(self.torques / self.torque_limits).clip(max=1.0), dim=-1)
+
+    def _reward_power(self):
+        # Penalize power
+        return torch.sum((self.torques * self.dof_vel).clip(min=0.0), dim=-1)
+
+    def _reward_waist_pos(self):
+        # Penalize waist position
+        return torch.square(self.dof_pos[:, 0])
 
     def _reward_dof_vel(self):
         # Penalize dof velocities
