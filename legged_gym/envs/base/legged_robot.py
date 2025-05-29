@@ -1011,7 +1011,7 @@ class LeggedRobot(BaseTask):
     #------------ reward functions----------------
     def _reward_survival(self):
         # Reward survival
-        return torch.ones(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
+        return torch.ones(self.num_envs, dtype=torch.float, device=self.device)
     
     def _reward_lin_vel_z(self):
         # Penalize z axis base linear velocity

@@ -47,7 +47,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         amp_motion_files = MOTION_FILES
 
     class init_state( LeggedRobotCfg.init_state ):
-        pos = [0.0, 0.0, 0.42] # x,y,z [m]
+        pos = [0.0, 0.0, 0.72] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
             'Waist': 0.,
             'Left_Hip_Pitch': -0.2,
@@ -72,9 +72,9 @@ class T1AMPCfg( LeggedRobotCfg ):
         damping = {'Waist': 2.0, 'Hip': 2.0, 'Knee': 2.0,
                      'Ankle': 1.0}
         # action scale: target angle = actionScale * action + defaultAngle
-        action_scale = 0.25
+        action_scale = 1.0
         # decimation: Number of control action updates @ sim DT per policy DT
-        decimation = 4
+        decimation = 10
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane'
@@ -121,23 +121,23 @@ class T1AMPCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
-            survival = 20.0
+            survival = 40.0
             termination = 0.0
-            tracking_lin_vel = 100.0
-            tracking_ang_vel = 20.0
-            lin_vel_z = 0.0
-            ang_vel_xy = -1.0
-            orientation = 0.0
-            torques = 0.0
-            dof_vel = 0.0
-            dof_acc = 0.0
+            tracking_lin_vel = 50.0
+            tracking_ang_vel = 40.0
+            lin_vel_z = -2.0
+            ang_vel_xy = -0.5
+            orientation = -5.0
+            torques = -2.e-4
+            dof_vel = -1.e-4
+            dof_acc = -1.e-7
             base_height = -1.0
             feet_air_time = 0.0
             collision = 0.0
             feet_stumble = 0.0 
             action_rate = -1.0
             stand_still = 0.0
-            dof_pos_limits = 0.0
+            dof_pos_limits = -1.0
         
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
 
@@ -149,7 +149,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             dof_vel = 0.05
             height_measurements = 5.0
         clip_observations = 18.
-        clip_actions = 5.
+        clip_actions = 1.
 
     class commands:
         curriculum = False
@@ -164,6 +164,25 @@ class T1AMPCfg( LeggedRobotCfg ):
             # ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
             ang_vel_yaw = [-0., 0.]    # min max [rad/s]
             heading = [-3.14, 3.14]
+
+    class sim:
+        dt = 0.002
+        substeps = 1
+        gravity = [0., 0. ,-9.81]  # [m/s^2]
+        up_axis = 1  # 0 is y, 1 is z
+
+        class physx:
+            num_threads = 10
+            solver_type = 1  # 0: pgs, 1: tgs
+            num_position_iterations = 4
+            num_velocity_iterations = 0
+            contact_offset = 0.01  # [m]
+            rest_offset = 0.0   # [m]
+            bounce_threshold_velocity = 0.5 #0.5 [m/s]
+            max_depenetration_velocity = 1.0
+            max_gpu_contact_pairs = 2**23 #2**24 -> needed for 8000 envs and more
+            default_buffer_size_multiplier = 5
+            contact_collection = 2 # 0: never, 1: last sub-step, 2: all sub-steps (default=2)
 
 class T1AMPCfgPPO( LeggedRobotCfgPPO ):
     runner_class_name = 'AMPOnPolicyRunner'
