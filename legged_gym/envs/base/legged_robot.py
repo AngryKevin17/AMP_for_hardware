@@ -79,6 +79,9 @@ class LeggedRobot(BaseTask):
         self.init_done = False
         self._parse_cfg(self.cfg)
         super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless)
+        
+        self.num_obs_stacking = cfg.env.include_history_steps
+        self.num_latent_dim = cfg.env.num_priv_embedding
 
         if not self.headless:
             self.set_camera(self.cfg.viewer.pos, self.cfg.viewer.lookat)
@@ -96,8 +99,8 @@ class LeggedRobot(BaseTask):
             self.obs_buf_history.reset(
                 torch.arange(self.num_envs, device=self.device),
                 self.obs_buf[torch.arange(self.num_envs, device=self.device)])
-        obs, privileged_obs, _, _, _, _, _ = self.step(torch.zeros(self.num_envs, self.num_actions, device=self.device, requires_grad=False))
-        return obs, privileged_obs
+        obs, privileged_obs, obs_hist, _, _, _, _, _ = self.step(torch.zeros(self.num_envs, self.num_actions, device=self.device, requires_grad=False))
+        return obs, privileged_obs, obs_hist
 
     def step(self, actions):
         """ Apply actions, simulate, call self.post_physics_step()
@@ -124,13 +127,15 @@ class LeggedRobot(BaseTask):
         if self.cfg.env.include_history_steps is not None:
             self.obs_buf_history.reset(reset_env_ids, self.obs_buf[reset_env_ids])
             self.obs_buf_history.insert(self.obs_buf)
-            policy_obs = self.obs_buf_history.get_obs_vec(np.arange(self.include_history_steps))
+            # policy_obs = self.obs_buf_history.get_obs_vec(np.arange(self.include_history_steps))
+            policy_obs = self.obs_buf
+            self.obs_hist_buf = self.obs_buf_history.get_obs_vec(np.arange(self.include_history_steps))
         else:
             policy_obs = self.obs_buf
         if self.privileged_obs_buf is not None:
             self.privileged_obs_buf = torch.clip(self.privileged_obs_buf, -clip_obs, clip_obs)
         
-        return policy_obs, self.privileged_obs_buf, self.rew_buf, self.reset_buf, self.extras, reset_env_ids, terminal_amp_states
+        return policy_obs, self.privileged_obs_buf, self.obs_hist_buf, self.rew_buf, self.reset_buf, self.extras, reset_env_ids, terminal_amp_states
 
     def get_observations(self):
         if self.cfg.env.include_history_steps is not None:
@@ -138,6 +143,11 @@ class LeggedRobot(BaseTask):
         else:
             policy_obs = self.obs_buf
         return policy_obs
+    
+    def get_rma_observations(self):
+        policy_obs = self.obs_buf
+        policy_obs_hist = self.obs_buf_history.get_obs_vec(np.arange(self.include_history_steps))            
+        return policy_obs, policy_obs_hist
 
     def post_physics_step(self):
         """ check terminations, compute observations and rewards
@@ -281,9 +291,6 @@ class LeggedRobot(BaseTask):
         if self.add_noise:
             self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_scale_vec
 
-        # Remove velocity observations from policy observation.
-        # if self.num_obs == self.num_privileged_obs - 6:
-        #     self.obs_buf = self.privileged_obs_buf[:, 6:]
         # Remove lin velocity observations from policy observation.
         if self.num_obs == self.num_privileged_obs - 3:
             self.obs_buf = self.privileged_obs_buf[:, 3:]
@@ -292,38 +299,19 @@ class LeggedRobot(BaseTask):
 
     def get_amp_observations(self):
         joint_pos = self.dof_pos
-        # # foot_pos = self.foot_positions_in_base_frame(self.dof_pos).to(self.device)
-        feet_pos_flat = self.feet_pos.view(self.feet_pos.shape[0], -1) # torch.Size([4096, 6]) 
-        # print(feet_pos_flat)
-        root_pos_repeated = self.root_states[:, 0:3].repeat(1, self.feet_pos.shape[1]) # torch.Size([4096, 6])
-        foot_pos_relative_W = feet_pos_flat - root_pos_repeated # torch.Size([4096, 6])
-        # print(foot_pos_relative_W)
-        # 将 foot_pos_relative_W 按照每 3 个值分割为 2 组
-        foot_pos_leg_1 = foot_pos_relative_W[:, :3]  # 前 3 个值是第一个腿的位置
-        foot_pos_leg_2 = foot_pos_relative_W[:, 3:]  # 后 3 个值是第二个腿的位置
-
-        # 查看原始数据
-        # print("Original foot_pos_leg_1:", foot_pos_leg_1)
-        # print("Original foot_pos_leg_2:", foot_pos_leg_2)
-
-        # 使用 quat_rotate_inverse 来转换这两个腿的位置
+        feet_pos_flat = self.feet_pos.view(self.feet_pos.shape[0], -1)
+        root_pos_repeated = self.root_states[:, 0:3].repeat(1, self.feet_pos.shape[1])
+        foot_pos_relative_W = feet_pos_flat - root_pos_repeated
+        foot_pos_leg_1 = foot_pos_relative_W[:, :3]
+        foot_pos_leg_2 = foot_pos_relative_W[:, 3:]
         foot_pos_leg_1_base = quat_rotate_inverse(self.base_quat, foot_pos_leg_1)
         foot_pos_leg_2_base = quat_rotate_inverse(self.base_quat, foot_pos_leg_2)
-
-        # 输出旋转后的数据
-        # print("Transformed foot_pos_leg_1_base:", foot_pos_leg_1_base)
-        # print("Transformed foot_pos_leg_2_base:", foot_pos_leg_2_base)
-
-        # 将两个腿的位置合并成一个 6 维的张量
         foot_pos_relative_B = torch.cat([foot_pos_leg_1_base, foot_pos_leg_2_base], dim=1)
-        # print(foot_pos_relative_B)
-        
 
         base_lin_vel = self.base_lin_vel
         base_ang_vel = self.base_ang_vel
         joint_vel = self.dof_vel
         z_pos = self.root_states[:, 2:3]
-        # return torch.cat((joint_pos, foot_pos_relative, base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
         return torch.cat((joint_pos , foot_pos_relative_B,base_lin_vel, base_ang_vel, joint_vel, z_pos), dim=-1)
 
 

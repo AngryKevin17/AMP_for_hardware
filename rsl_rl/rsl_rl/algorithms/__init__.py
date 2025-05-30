@@ -30,3 +30,4 @@
 
 from .ppo import PPO
 from .amp_ppo import AMPPPO
+from .amp_ppo_RMA import AMPPPORMA

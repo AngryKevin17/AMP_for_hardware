@@ -38,9 +38,10 @@ class T1AMPCfg( LeggedRobotCfg ):
 
     class env( LeggedRobotCfg.env ):
         num_envs = 8192
-        include_history_steps = None  # Number of steps of history to include.
+        include_history_steps = 50
         num_observations = 46
         num_privileged_obs = 49
+        num_priv_embedding = 64
         num_actions = 11
         env_spacing = 1.0
         reference_state_initialization = True
@@ -156,7 +157,7 @@ class T1AMPCfg( LeggedRobotCfg ):
             heading = [-3.14, 3.14]
 
 class T1AMPCfgPPO( LeggedRobotCfgPPO ):
-    runner_class_name = 'AMPOnPolicyRunner'
+    runner_class_name = 'AMPOnPolicyRunnerRMA'
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
         amp_replay_buffer_size = 1000000
@@ -167,9 +168,9 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
 
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 't1_amp_example'
-        algorithm_class_name = 'AMPPPO'
-        policy_class_name = 'ActorCritic'
+        experiment_name = 't1_amp'
+        algorithm_class_name = 'AMPPPORMA'
+        policy_class_name = 'ActorCriticRMA'
         max_iterations = 300000 # number of policy updates
 
         amp_reward_coef = 2.0
