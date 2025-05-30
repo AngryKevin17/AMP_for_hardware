@@ -1,44 +1,24 @@
 
 # test AMP sim2sim Result 
 
+import os
+import sys
 import math
+import time
 import numpy as np
-import mujoco, mujoco_viewer
+import mujoco
+from mujoco.viewer import launch_passive
 from tqdm import tqdm
-# from collections import deque
-# from scipy.spatial.transform import Rotation as R
-from legged_gym import LEGGED_GYM_ROOT_DIR
-from legged_gym.envs import T1AMPCfg
 import torch
+
+LEGGED_GYM_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+
 
 
 class cmd:
     vx = 1.0
     vy = 0.0
     dyaw = 0.0
-
-
-# def quaternion_to_euler_array(quat):
-#     # Ensure quaternion is in the correct format [x, y, z, w]
-#     x, y, z, w = quat
-    
-#     # Roll (x-axis rotation)
-#     t0 = +2.0 * (w * x + y * z)
-#     t1 = +1.0 - 2.0 * (x * x + y * y)
-#     roll_x = np.arctan2(t0, t1)
-    
-#     # Pitch (y-axis rotation)
-#     t2 = +2.0 * (w * y - z * x)
-#     t2 = np.clip(t2, -1.0, 1.0)
-#     pitch_y = np.arcsin(t2)
-    
-#     # Yaw (z-axis rotation)
-#     t3 = +2.0 * (w * z + x * y)
-#     t4 = +1.0 - 2.0 * (y * y + z * z)
-#     yaw_z = np.arctan2(t3, t4)
-    
-#     # Returns roll, pitch, yaw in a NumPy array in radians
-#     return np.array([roll_x, pitch_y, yaw_z])
 
 def quat_rotate_inverse(q, v):
     q_w = q[-1]
@@ -78,12 +58,12 @@ def run_mujoco(policy, cfg):
     model.opt.timestep = cfg.sim_config.dt
     data = mujoco.MjData(model)
     mujoco.mj_step(model, data)
-    viewer = mujoco_viewer.MujocoViewer(model, data)
+
+    viewer = launch_passive(model, data)
 
     num_dofs = cfg.env.num_actions + 2
     target_q = np.zeros((num_dofs), dtype=np.double)
     action = np.zeros((cfg.env.num_actions), dtype=np.double)
-    # default_dof_pos = np.zeros((num_dofs), dtype=np.double)
     default_dof_pos = np.array([
         0.0,        # Waist
         -0.2,       # Left_Hip_Pitch
@@ -100,12 +80,8 @@ def run_mujoco(policy, cfg):
         0.0         # Right_Ankle_Roll
     ], dtype=np.double)
 
-
-    # hist_obs = deque()
-    # for _ in range(cfg.env.frame_stack):
-    #     hist_obs.append(np.zeros([1, cfg.env.num_single_obs], dtype=np.double))
-
     count_lowlevel = 0
+    stacked_obs = np.zeros((cfg.env.include_history_steps, cfg.env.num_observations), dtype=np.float32)
 
 
     for _ in tqdm(range(int(cfg.sim_config.sim_duration / cfg.sim_config.dt)), desc="Simulating..."):
@@ -119,30 +95,30 @@ def run_mujoco(policy, cfg):
         if count_lowlevel % cfg.sim_config.decimation == 0:
 
             obs = np.zeros([cfg.env.num_observations], dtype=np.float32)
-            # obs[0:3] = omega * cfg.normaliaztion.obs_scales.ang_vel
             obs[0:3] = omega * 0.25
             obs[3:6] = gvec 
-            # obs[6] = cmd.vx * cfg.normalization.obs_scales.lin_vel
-            # obs[7] = cmd.vy * cfg.normalization.obs_scales.lin_vel
-            # obs[8] = cmd.dyaw * cfg.normalization.obs_scales.ang_vel
             obs[6] = cmd.vx * 2
             obs[7] = cmd.vy * 2
             obs[8] = cmd.dyaw * 0.25
-            # obs[9:22] = (q - default_dof_pos) * cfg.normalization.obs_scales.dof_pos
             obs[9:22] = (q - default_dof_pos)
-            # obs[22:35] = dq * cfg.normalization.obs_scales.dof_vel
             obs[22:35] = dq * 0.05
-            obs[35:48] = action
+            obs[35:46] = action
 
             obs = np.clip(obs, -cfg.normalization.clip_observations, cfg.normalization.clip_observations)
 
+            if count_lowlevel == 0:
+                stacked_obs = np.tile(obs, (cfg.env.include_history_steps, 1))
+            else:
+                stacked_obs[:-1] = stacked_obs[1:]
+                stacked_obs[-1] = obs
 
-            policy_input = np.zeros([cfg.env.num_observations], dtype=np.float32)
-            policy_input = obs
-            action[:] = policy(torch.tensor(policy_input)).detach().numpy()
+            action[:] = policy({
+                "observations": torch.tensor(obs),
+                "encoder_observations": torch.tensor(stacked_obs.flatten())
+            }).detach().numpy()
             action = np.clip(action, -cfg.normalization.clip_actions, cfg.normalization.clip_actions)
 
-            target_q = action * cfg.control.action_scale
+            target_q[cfg.control.effective_ids] = action * cfg.control.action_scale
 
 
         target_dq = np.zeros((num_dofs), dtype=np.double)
@@ -153,7 +129,9 @@ def run_mujoco(policy, cfg):
         data.ctrl = tau
 
         mujoco.mj_step(model, data)
-        viewer.render()
+        viewer.cam.lookat[:] = data.qpos.astype(np.float32)[0:3]
+        viewer.sync()
+        time.sleep(cfg.sim_config.dt)
         count_lowlevel += 1
 
     viewer.close()
@@ -168,21 +146,40 @@ if __name__ == '__main__':
     parser.add_argument("--task", required=True, type=str, help="Name of the task to run.")
     args = parser.parse_args()
 
-    class Sim2simCfg(T1AMPCfg):
+    class Sim2simCfg:
+
+        class env:
+            num_observations = 46
+            num_privileged_obs = 49
+            num_actions = 11
+            include_history_steps = 50
+
+        class control:
+            action_scale = 0.25
+            effective_ids = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11] # ids of the joints that are controlled by the policy
+
+        class normalization:
+            class obs_scales:
+                lin_vel = 2.0
+                ang_vel = 0.25
+                dof_pos = 1.0
+                dof_vel = 0.05
+                height_measurements = 5.0
+            clip_observations = 18.
+            clip_actions = 4.
 
         class sim_config:
-            # if args.terrain:
-            #     mujoco_model_path = f'{LEGGED_GYM_ROOT_DIR}/resources/robots/XBot/mjcf/XBot-L-terrain.xml'
-            # else:
             mujoco_model_path = f'{LEGGED_GYM_ROOT_DIR}/resources/robots/t1/T1_locomotion.xml'
             sim_duration = 20.0
-            dt = 0.001
-            decimation = 20
+            dt = 0.002
+            decimation = 10
 
         class robot_config:
             kps = np.array([200, 200, 200, 200, 200, 100, 100, 200, 200, 200, 200, 100,100], dtype=np.double)
             kds = np.array([2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1,1], dtype=np.double)
             tau_limit = np.array([30, 45, 45, 30, 65, 24, 6, 45, 45, 30, 65, 24, 6], dtype=np.double)
 
+
+if __name__ == "__main__":
     policy = torch.jit.load(args.load_model)
     run_mujoco(policy, Sim2simCfg())

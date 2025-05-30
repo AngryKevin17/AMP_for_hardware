@@ -56,7 +56,7 @@ def play(args):
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
-    _, _ = env.reset()
+    _, _, _ = env.reset()
     obs, obs_hist = env.get_rma_observations()
     # load policy
     train_cfg.runner.resume = True
@@ -81,7 +81,7 @@ def play(args):
 
     for i in range(10*int(env.max_episode_length)):
         actions = policy(obs.detach(), obs_hist.detach())
-        obs, privileged_obs, obs_hist, rewards, dones, infos = env.step(actions.detach())
+        obs, _, obs_hist, _, _, infos, _, _ = env.step(actions.detach())
         if RECORD_FRAMES:
             if i % 2:
                 filename = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'frames', f"{img_idx}.png")

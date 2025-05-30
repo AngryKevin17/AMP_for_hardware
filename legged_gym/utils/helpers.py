@@ -35,6 +35,7 @@ import numpy as np
 import random
 from isaacgym import gymapi
 from isaacgym import gymutil
+from typing import Dict
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 
@@ -182,6 +183,9 @@ def export_policy_as_jit(actor_critic, path):
         # assumes LSTM: TODO add GRU
         exporter = PolicyExporterLSTM(actor_critic)
         exporter.export(path)
+    elif hasattr(actor_critic, 'adaptation_module'):
+        exporter = PolicyExporterRMA(actor_critic)
+        exporter.export(path)
     else: 
         os.makedirs(path, exist_ok=True)
         path = os.path.join(path, 'policy_1.pt')
@@ -218,4 +222,23 @@ class PolicyExporterLSTM(torch.nn.Module):
         traced_script_module = torch.jit.script(self)
         traced_script_module.save(path)
 
+class PolicyExporterRMA(torch.nn.Module):
+    def __init__(self, actor_critic):
+        super().__init__()
+        self.actor = copy.deepcopy(actor_critic.actor)
+        self.adaptation_module = copy.deepcopy(actor_critic.adaptation_module)
+
+    def forward(self, inputs: Dict[str, torch.Tensor]):
+        observations = inputs["observations"]
+        encoder_observations = inputs["encoder_observations"]
+        priv_embedding = self.adaptation_module(encoder_observations)
+        observations = torch.cat((observations, priv_embedding), dim=-1)
+        return self.actor(observations)
+
+    def export(self, path):
+        os.makedirs(path, exist_ok=True)
+        path = os.path.join(path, 'policy_rma_1.pt')
+        self.to('cpu')
+        traced_script_module = torch.jit.script(self)
+        traced_script_module.save(path)
     
