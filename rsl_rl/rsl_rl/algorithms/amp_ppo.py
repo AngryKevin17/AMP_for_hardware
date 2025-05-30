@@ -237,7 +237,7 @@ class AMPPPO:
                     *sample_amp_expert, lambda_=10)
                 
                 # Bound Loss
-                soft_bound = 1.0
+                soft_bound = 4.0
                 bound_loss = torch.clip(mu_batch - soft_bound, min=0.0).square().mean() + torch.clip(mu_batch + soft_bound, max=0.0).square().mean()
 
                 # Compute total loss.

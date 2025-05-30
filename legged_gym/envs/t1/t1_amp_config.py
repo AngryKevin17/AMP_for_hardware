@@ -118,40 +118,28 @@ class T1AMPCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.68
         class scales( LeggedRobotCfg.rewards.scales ):
+            survival = 15.0
             termination = 0.0
             tracking_lin_vel = 75
             tracking_lin_y_vel = -1
             tracking_ang_vel = -1
-            # tracking_lin_vel = 1.5
-            # tracking_ang_vel = 0.5
-            survival = 15.0 # 存活
-            lin_vel_z = -0.0
-            ang_vel_xy = -0.0
-            orientation = -0.0
-            torques = -0.0000025
-            dof_vel = -0.0
-            dof_acc = -0.0
-            base_height = -1.0 
+            lin_vel_z = -2.0
+            ang_vel_xy = -0.5
+            orientation = -5.0
+            torques = -2.e-4
+            dof_vel = -1.e-4
+            dof_acc = -1.e-7
+            base_height = -1.0
             feet_air_time = 0.0
-            
+            collision = 0.0
             feet_stumble = 0.0 
             action_rate = -1.0
             stand_still = 0.0
             dof_pos_limits = -1.0
-            # add
-            # torque_tiredness = -1.e-2
-            # dof_pos_ref= -1.e-2
-            # root_acc= -1.e-4
-            # collision = 0.0
-            # waist_pos= -1.
-            # feet_slip = -0.1
-            # feet_vel_z = -0.1
-            # feet_yaw_diff = -1.
-            # feet_yaw_mean = -1.
-            # feet_roll = -0.1
-            # feet_distance = -5.
-            # feet_swing = 2.5
-            # stand_still = -1.
+            feet_yaw_diff = -1.
+            feet_yaw_mean = -1.
+            feet_roll = -0.1
+            feet_distance = -1.
 
 
     class commands:
