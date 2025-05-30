@@ -498,7 +498,9 @@ class LeggedRobot(BaseTask):
             d_gains = self.d_gains
 
         if control_type=="P":
-            torques = p_gains*(actions_scaled + self.default_dof_pos - self.dof_pos) - d_gains*self.dof_vel
+            self.dof_targets[:] = self.default_dof_pos
+            self.dof_targets[:, self.cfg.control.effective_ids] += actions_scaled[:]
+            torques = p_gains*(self.dof_targets - self.dof_pos) - d_gains*self.dof_vel
         elif control_type=="V":
             torques = p_gains*(actions_scaled - self.dof_vel) - d_gains*(self.dof_vel - self.last_dof_vel)/self.sim_params.dt
         elif control_type=="T":
@@ -649,9 +651,9 @@ class LeggedRobot(BaseTask):
         noise_vec[9:12] = 0. # commands
         noise_vec[12:25] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
         noise_vec[25:38] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
-        noise_vec[38:51] = 0. # previous actions
+        noise_vec[38:49] = 0. # previous actions
         if self.cfg.terrain.measure_heights:
-            noise_vec[51:238] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
+            noise_vec[49:236] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
         return noise_vec
 
     #----------------------------------------
@@ -690,9 +692,10 @@ class LeggedRobot(BaseTask):
         self.noise_scale_vec = self._get_noise_scale_vec(self.cfg)
         self.gravity_vec = to_torch(get_axis_params(-1., self.up_axis_idx), device=self.device).repeat((self.num_envs, 1))
         self.forward_vec = to_torch([1., 0., 0.], device=self.device).repeat((self.num_envs, 1))
-        self.torques = torch.zeros(self.num_envs, self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
-        self.p_gains = torch.zeros(self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
-        self.d_gains = torch.zeros(self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
+        self.torques = torch.zeros(self.num_envs, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
+        self.p_gains = torch.zeros(self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
+        self.d_gains = torch.zeros(self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
+        self.dof_targets = torch.zeros(self.num_envs, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
         self.actions = torch.zeros(self.num_envs, self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
         self.last_actions = torch.zeros(self.num_envs, self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
         self.last_dof_vel = torch.zeros_like(self.dof_vel)
@@ -737,12 +740,12 @@ class LeggedRobot(BaseTask):
         p_mult = ((
             self.cfg.domain_rand.stiffness_multiplier_range[0] -
             self.cfg.domain_rand.stiffness_multiplier_range[1]) *
-            torch.rand(num_envs, self.num_actions, device=self.device) +
+            torch.rand(num_envs, self.num_dofs, device=self.device) +
             self.cfg.domain_rand.stiffness_multiplier_range[1]).float()
         d_mult = ((
             self.cfg.domain_rand.damping_multiplier_range[0] -
             self.cfg.domain_rand.damping_multiplier_range[1]) *
-            torch.rand(num_envs, self.num_actions, device=self.device) +
+            torch.rand(num_envs, self.num_dofs, device=self.device) +
             self.cfg.domain_rand.damping_multiplier_range[1]).float()
         
         return p_mult * self.p_gains, d_mult * self.d_gains

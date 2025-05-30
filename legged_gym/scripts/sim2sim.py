@@ -80,9 +80,10 @@ def run_mujoco(policy, cfg):
     mujoco.mj_step(model, data)
     viewer = mujoco_viewer.MujocoViewer(model, data)
 
-    target_q = np.zeros((cfg.env.num_actions), dtype=np.double)
+    num_dofs = cfg.env.num_actions + 2
+    target_q = np.zeros((num_dofs), dtype=np.double)
     action = np.zeros((cfg.env.num_actions), dtype=np.double)
-    # default_dof_pos = np.zeros((cfg.env.num_actions), dtype=np.double)
+    # default_dof_pos = np.zeros((num_dofs), dtype=np.double)
     default_dof_pos = np.array([
         0.0,        # Waist
         -0.2,       # Left_Hip_Pitch
@@ -111,8 +112,8 @@ def run_mujoco(policy, cfg):
 
         # Obtain an observation
         q, dq, quat, omega, gvec = get_obs(data)
-        q = q[-cfg.env.num_actions:]
-        dq = dq[-cfg.env.num_actions:]
+        q = q[-num_dofs:]
+        dq = dq[-num_dofs:]
 
         # 1000hz -> 100hz
         if count_lowlevel % cfg.sim_config.decimation == 0:
@@ -144,7 +145,7 @@ def run_mujoco(policy, cfg):
             target_q = action * cfg.control.action_scale
 
 
-        target_dq = np.zeros((cfg.env.num_actions), dtype=np.double)
+        target_dq = np.zeros((num_dofs), dtype=np.double)
         # Generate PD control
         tau = pd_control(target_q,default_dof_pos,q, cfg.robot_config.kps,
                         target_dq, dq, cfg.robot_config.kds)  # Calc torques

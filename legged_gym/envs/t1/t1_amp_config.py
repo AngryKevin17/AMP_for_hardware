@@ -39,9 +39,9 @@ class T1AMPCfg( LeggedRobotCfg ):
     class env( LeggedRobotCfg.env ):
         num_envs = 8192
         include_history_steps = None  # Number of steps of history to include.
-        num_observations = 48
-        num_privileged_obs = 51
-        num_actions = 13
+        num_observations = 46
+        num_privileged_obs = 49
+        num_actions = 11
         env_spacing = 1.0
         reference_state_initialization = True
         reference_state_initialization_prob = 0.85
@@ -76,6 +76,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
+        effective_ids = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11] # ids of the joints that are controlled by the policy
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane'
@@ -179,5 +180,6 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
 
         disc_grad_penalty = 10 # original 10
 
-        min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
-  
+        # min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
+        effective_ids = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11] # ids of the joints that are controlled by the policy
+        min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.05, 0.02, 0.02, 0.05, 0.05]
