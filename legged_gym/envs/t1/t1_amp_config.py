@@ -151,7 +151,7 @@ class T1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [0.0, 2.0] # min max [m/s]
+            lin_vel_x = [0.0, 1.0] # min max [m/s]
             lin_vel_y = [-0.0, 0.0]   # min max [m/s]
             ang_vel_yaw = [0.0, 0.0]    # min max [rad/s]
             heading = [-3.14, 3.14]
@@ -184,3 +184,5 @@ class T1AMPCfgPPO( LeggedRobotCfgPPO ):
         # min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.02]
         effective_ids = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11] # ids of the joints that are controlled by the policy
         min_normalized_std = [0.02, 0.05, 0.02, 0.02, 0.05, 0.05, 0.05, 0.02, 0.02, 0.05, 0.05]
+
+        use_wandb = True
